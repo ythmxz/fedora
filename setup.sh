@@ -371,7 +371,7 @@ fi
 # 12. Customizações Finais do Ambiente (Dux)
 # ------------------------------------------------------------------------------
 echo "==> Instalando Dux..."
-curl -fsSL https://install.duxlabs.dev | sh -s -- -c mango -t ghostty --all-features -y
+curl -fsSL https://install.duxlabs.dev | sh -s -- -c niri -t ghostty --all-features -y
 
 echo "=============================================================================="
 echo "Configuração concluída com sucesso!"
