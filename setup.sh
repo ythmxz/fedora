@@ -253,26 +253,6 @@ fi
 echo "==> Configurando Git..."
 git config --global init.defaultBranch main
 
-CURRENT_GIT_NAME=$(git config --global user.name || true)
-CURRENT_GIT_EMAIL=$(git config --global user.email || true)
-
-# Lê de /dev/tty se disponível e houver terminal controlador
-if [ -c /dev/tty ] && (exec </dev/tty) 2>/dev/null; then
-    if [ -z "$CURRENT_GIT_NAME" ]; then
-        read -r -p "Digite seu nome para o Git (ou pressione Enter para pular): " INPUT_GIT_NAME </dev/tty
-        if [ -n "$INPUT_GIT_NAME" ]; then
-            git config --global user.name "$INPUT_GIT_NAME"
-        fi
-    fi
-
-    if [ -z "$CURRENT_GIT_EMAIL" ]; then
-        read -r -p "Digite seu e-mail para o Git (ou pressione Enter para pular): " INPUT_GIT_EMAIL </dev/tty
-        if [ -n "$INPUT_GIT_EMAIL" ]; then
-            git config --global user.email "$INPUT_GIT_EMAIL"
-        fi
-    fi
-fi
-
 # Criação e inicialização de configurações de CLI (Fastfetch, Helix, Yazi)
 echo "==> Inicializando diretórios e arquivos de configuração em ~/.config..."
 
@@ -335,22 +315,27 @@ echo "==> Instalando Zed Editor..."
 curl -f https://zed.dev/install.sh | sh
 
 echo "==> Instalando Spicetify CLI..."
-if [ -c /dev/tty ] && (exec </dev/tty) 2>/dev/null; then
-    curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sh
-else
-    curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sed 's|< /dev/tty||g' | sh || true
+if [ ! -x "$HOME/.spicetify/spicetify" ]; then
+    echo "n" | (curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sed 's|< /dev/tty||g' | sh)
 fi
-curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh || true
+
+echo "==> Instalando Spicetify Marketplace..."
+if [ ! -d "$HOME/.spicetify/CustomApps/marketplace" ]; then
+    curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh || true
+fi
 
 # 10. Flatpaks
 # ------------------------------------------------------------------------------
 echo "==> Configurando Flatpak e Flathub..."
+# Atualiza XDG_DATA_DIRS na sessão corrente para evitar avisos de diretório do Flatpak
+export XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share"
+
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 echo "==> Instalando aplicativos Flatpak..."
-flatpak install --user -y flathub com.spotify.Client
-flatpak install --user -y flathub com.getpostman.Postman
-flatpak install --user -y flathub io.github.Foldex.AdwSteamGtk
+flatpak install --user -y --noninteractive flathub com.spotify.Client
+flatpak install --user -y --noninteractive flathub com.getpostman.Postman
+flatpak install --user -y --noninteractive flathub io.github.Foldex.AdwSteamGtk
 
 # 11. AppImages (AppManager primeiro com execução; demais para gerenciamento)
 # ------------------------------------------------------------------------------
