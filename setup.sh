@@ -327,6 +327,10 @@ curl -sS https://starship.rs/install.sh | sh -s -- --yes
 echo "==> Instalando Zed Editor..."
 curl -f https://zed.dev/install.sh | sh
 
+echo "==> Instalando Spicetify CLI..."
+curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh || true
+
 # 10. Flatpaks
 # ------------------------------------------------------------------------------
 echo "==> Configurando Flatpak e Flathub..."
@@ -335,6 +339,7 @@ flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.f
 echo "==> Instalando aplicativos Flatpak..."
 flatpak install -y flathub com.spotify.Client
 flatpak install -y flathub com.getpostman.Postman
+flatpak install -y flathub io.github.Foldex.AdwSteamGtk
 
 # 11. AppImages (AppManager primeiro com execução; demais para gerenciamento)
 # ------------------------------------------------------------------------------
