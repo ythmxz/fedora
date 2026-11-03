@@ -56,18 +56,18 @@ sudo dnf install -y rpmfusion-\*-appstream-data
 
 echo "==> Configurando codecs e aceleração de vídeo..."
 sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing || sudo dnf install -y ffmpeg --allowerasing
-sudo dnf install -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
-sudo dnf install -y mesa-va-drivers-freeworld
+sudo dnf install -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin --allowerasing
+sudo dnf install -y mesa-va-drivers-freeworld --allowerasing
 
 # 5. Habilitação de Repositórios de Terceiros e COPRs
 # ------------------------------------------------------------------------------
 echo "==> Configurando repositórios de terceiros (Docker, COPR, ArtCraft)..."
 
 # Repositório Oficial do Docker
-sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf config-manager addrepo --overwrite --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
 
 # ArtCraft
-sudo dnf config-manager addrepo --from-repofile=https://getartcraft.com/rpm/artcraft.repo
+sudo dnf config-manager addrepo --overwrite --from-repofile=https://getartcraft.com/rpm/artcraft.repo
 
 # COPRs
 sudo dnf copr enable -y lihaohong/yazi
@@ -233,7 +233,7 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker "$USER"
 
 # PostgreSQL: inicializa o cluster de banco de dados e habilita o serviço
-if [ ! -f /var/lib/pgsql/data/PG_VERSION ]; then
+if ! sudo test -f /var/lib/pgsql/data/PG_VERSION; then
     echo "Inicializando cluster do PostgreSQL..."
     sudo postgresql-setup --initdb
 fi
@@ -335,18 +335,22 @@ echo "==> Instalando Zed Editor..."
 curl -f https://zed.dev/install.sh | sh
 
 echo "==> Instalando Spicetify CLI..."
-curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sh
+if [ -c /dev/tty ] && (exec </dev/tty) 2>/dev/null; then
+    curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sh
+else
+    curl -fsSL https://raw.githubusercontent.com/spicetify/cli/main/install.sh | sed 's|< /dev/tty||g' | sh || true
+fi
 curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh || true
 
 # 10. Flatpaks
 # ------------------------------------------------------------------------------
 echo "==> Configurando Flatpak e Flathub..."
-flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 echo "==> Instalando aplicativos Flatpak..."
-flatpak install -y flathub com.spotify.Client
-flatpak install -y flathub com.getpostman.Postman
-flatpak install -y flathub io.github.Foldex.AdwSteamGtk
+flatpak install --user -y flathub com.spotify.Client
+flatpak install --user -y flathub com.getpostman.Postman
+flatpak install --user -y flathub io.github.Foldex.AdwSteamGtk
 
 # 11. AppImages (AppManager primeiro com execução; demais para gerenciamento)
 # ------------------------------------------------------------------------------
