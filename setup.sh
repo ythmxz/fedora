@@ -55,7 +55,7 @@ sudo dnf config-manager setopt fedora-cisco-openh264.enabled=1
 sudo dnf install -y rpmfusion-\*-appstream-data
 
 echo "==> Configurando codecs e aceleração de vídeo..."
-sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
+sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing || sudo dnf install -y ffmpeg --allowerasing
 sudo dnf install -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
 sudo dnf install -y mesa-va-drivers-freeworld
 
@@ -187,7 +187,6 @@ PACKAGES_DESKTOP=(
 
     # Fontes
     jetbrains-mono-fonts-all
-    jetbrainsmono-nerd-fonts
 
     # Softwares de repositórios adicionados
     artcraft-launcher
@@ -215,6 +214,8 @@ sudo dnf install -y https://dbeaver.io/files/dbeaver-ce-latest-stable.x86_64.rpm
 echo "Baixando e instalando GodotHub..."
 GODOTHUB_RPM_URL=$(curl -s https://api.github.com/repos/RykoTheDev/GodotHub/releases/latest \
     | grep "browser_download_url.*linux-x86_64\.rpm" \
+    | grep -v "\.sig" \
+    | head -n 1 \
     | cut -d '"' -f 4 || true)
 
 if [ -n "$GODOTHUB_RPM_URL" ]; then
@@ -255,8 +256,8 @@ git config --global init.defaultBranch main
 CURRENT_GIT_NAME=$(git config --global user.name || true)
 CURRENT_GIT_EMAIL=$(git config --global user.email || true)
 
-# Lê de /dev/tty para funcionar mesmo se o script for executado via curl | bash
-if [ -e /dev/tty ]; then
+# Lê de /dev/tty se disponível e houver terminal controlador
+if [ -c /dev/tty ] && (exec </dev/tty) 2>/dev/null; then
     if [ -z "$CURRENT_GIT_NAME" ]; then
         read -r -p "Digite seu nome para o Git (ou pressione Enter para pular): " INPUT_GIT_NAME </dev/tty
         if [ -n "$INPUT_GIT_NAME" ]; then
@@ -311,6 +312,12 @@ else
     echo "Aviso: Não foi possível baixar o pacote de cursores Notwaita."
 fi
 
+# Instalação JetBrains Mono Nerd Font
+echo "==> Baixando e instalando JetBrains Mono Nerd Font..."
+sudo mkdir -p /usr/share/fonts/JetBrainsMonoNerd
+curl -fSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" \
+    | sudo tar -xJf - -C /usr/share/fonts/JetBrainsMonoNerd || true
+
 # Atualiza cache de fontes para JetBrains Mono e Nerd Font ficarem prontas
 fc-cache -f
 
@@ -351,6 +358,8 @@ mkdir -p "$APPIMAGE_DIR"
 echo "Baixando AppManager..."
 APPMANAGER_URL=$(curl -s https://api.github.com/repos/kem-a/AppManager/releases/latest \
     | grep "browser_download_url.*anylinux-x86_64\.AppImage" \
+    | grep -v "\.zsync" \
+    | head -n 1 \
     | cut -d '"' -f 4 || true)
 if [ -n "$APPMANAGER_URL" ]; then
     curl -fL "$APPMANAGER_URL" -o "$APPIMAGE_DIR/AppManager.AppImage"
